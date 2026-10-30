@@ -1,30 +1,24 @@
 package com.boulangerie.moteur.model;
 
-import java.util.List;
-
 public class Recette {
-    private String nomRecette;
-    private String ingredientPrincipal;
-    private String garniture;
-    private String resultat;
+    private String ingredient1;
+    private String ingredient2;
+    private String resultatCru;
+    private String resultatCuit;
 
-    public Recette(String nomRecette, String ingredientPrincipal, String garniture, String resultat) {
-        this.nomRecette = nomRecette;
-        this.ingredientPrincipal = ingredientPrincipal;
-        this.garniture = garniture;
-        this.resultat = resultat;
+    public Recette(String ingredient1, String ingredient2, String resultatCru, String resultatCuit) {
+        this.ingredient1 = ingredient1;
+        this.ingredient2 = ingredient2;
+        this.resultatCru = resultatCru;
+        this.resultatCuit = resultatCuit;
     }
 
-    public boolean correspond(String base, String ajoute) {
-        return (this.ingredientPrincipal.equals(base) && this.garniture.equals(ajoute)) ||
-            (this.ingredientPrincipal.equals(ajoute) && this.garniture.equals(base));
+    // Vérifie si les deux ingrédients (peu importe l'ordre) correspondent à cette recette
+    public boolean correspondAuMelange(String nom1, String nom2) {
+        return (nom1.equals(ingredient1) && nom2.equals(ingredient2)) ||
+            (nom1.equals(ingredient2) && nom2.equals(ingredient1));
     }
 
-    public String getNomRecette() {
-        return nomRecette;
-    }
-
-    public String getResultat() {
-        return resultat;
-    }
+    public String getResultatCru() { return resultatCru; }
+    public String getResultatCuit() { return resultatCuit; }
 }

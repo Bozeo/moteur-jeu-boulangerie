@@ -1,67 +1,61 @@
 package com.boulangerie.moteur.model;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import java.util.List;
 
 public class Four extends ElementDeJeu implements Interagissable {
-    private Ingredient ingredientInterne;
+    private Stock<Ingredient> stock;
     private float tempsCuisson;
-    private final float TEMPS_CUISSON_MAX = 5.0f; // 5 secondes pour cuire
-    private final float TEMPS_BRULURE_MAX = 10.0f; // 10 secondes -> l'ingrédient brûle
+    private final float TEMPS_CUIT = 4.0f;
+    private final float TEMPS_BRULE = 8.0f;
 
     public Four(float x, float y, float largeur, float hauteur) {
         super(x, y, largeur, hauteur);
-        this.ingredientInterne = null;
+        this.stock = new Stock<>();
         this.tempsCuisson = 0f;
     }
 
-    @Override
-    public void update(float delta) {
-        // Si un ingrédient est dans le four, la cuisson progresse
-        if (ingredientInterne != null) {
+    public void updateCuisson(float delta, List<Recette> recettes) {
+        if (!stock.estVide()) {
             tempsCuisson += delta;
+            Ingredient ing = stock.getElement();
 
-            if (tempsCuisson >= TEMPS_BRULURE_MAX) {
-                ingredientInterne.setEtat(Ingredient.EtatIngredient.BRULE);
-            } else if (tempsCuisson >= TEMPS_CUISSON_MAX) {
-                ingredientInterne.setEtat(Ingredient.EtatIngredient.CUIT);
+            if (tempsCuisson >= TEMPS_BRULE) {
+                ing.setEtat("BRULE");
+            } else if (tempsCuisson >= TEMPS_CUIT && ing.getEtat().equals("BRUT")) {
+                boolean recetteTrouvee = false;
+                for (Recette r : recettes) {
+                    if (ing.getNom().equals(r.getResultatCru())) {
+                        ing.setNom(r.getResultatCuit());
+                        ing.setEtat("CUIT");
+                        recetteTrouvee = true;
+                        break;
+                    }
+                }
+                if (!recetteTrouvee) {
+                    ing.setEtat("BRULE");
+                }
             }
         }
     }
 
     @Override
-    public void render(SpriteBatch batch) {
-        // Géré ultérieurement avec les textures graphiques
-    }
-
-    public void interagir() {
-        if (ingredientInterne == null) {
-            System.out.println("Four : Le four est vide.");
-        } else {
-            System.out.println("Four : Contient " + ingredientInterne.getNom() + " [État : " + ingredientInterne.getEtat() + " - Temps : " + (int)tempsCuisson + "s]");
+    public void interagir(Boulanger boulanger, List<Recette> recettes) {
+        if (!boulanger.getStock().estVide() && stock.estVide()) {
+            stock.setElement(boulanger.getStock().retirer());
+            tempsCuisson = 0f;
+        } else if (boulanger.getStock().estVide() && !stock.estVide()) {
+            boulanger.getStock().setElement(stock.retirer());
+            tempsCuisson = 0f;
         }
     }
 
-    public boolean estVide() {
-        return ingredientInterne == null;
-    }
+    @Override
+    public void update(float delta) {}
 
-    public float getProgressionCuisson() {
-        return Math.min(1.0f, tempsCuisson / TEMPS_BRULURE_MAX);
-    }
+    @Override
+    public void render(SpriteBatch batch) {}
 
-    public Ingredient getIngredientInterne() {
-        return ingredientInterne;
-    }
-
-    public void setIngredientInterne(Ingredient ingredient) {
-        this.ingredientInterne = ingredient;
-        this.tempsCuisson = 0f; // Réinitialisation du chrono à la pose
-    }
-
-    public Ingredient retirerIngredient() {
-        Ingredient temp = this.ingredientInterne;
-        this.ingredientInterne = null;
-        this.tempsCuisson = 0f;
-        return temp;
-    }
+    public Stock<Ingredient> getStock() { return stock; }
+    public float getProgressionCuisson() { return Math.min(1.0f, tempsCuisson / TEMPS_BRULE); }
 }

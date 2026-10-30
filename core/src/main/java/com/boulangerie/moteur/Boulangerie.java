@@ -12,7 +12,9 @@ import com.boulangerie.moteur.model.Boulanger;
 import com.boulangerie.moteur.model.Client;
 import com.boulangerie.moteur.model.Four;
 import com.boulangerie.moteur.model.Ingredient;
+import com.boulangerie.moteur.model.Interagissable;
 import com.boulangerie.moteur.model.PlanDeTravail;
+import com.boulangerie.moteur.model.Poubelle;
 import com.boulangerie.moteur.model.Recette;
 
 import java.util.ArrayList;
@@ -25,20 +27,18 @@ public class Boulangerie extends ApplicationAdapter {
     private BitmapFont font;
 
     private Boulanger boulanger;
-
-    // Stations de la cuisine
-    private PlanDeTravail bacFarine;
-    private PlanDeTravail bacBeurre;
-    private PlanDeTravail bacChocolat;
-    private PlanDeTravail planDeTravail;
+    private PlanDeTravail bacFarine, bacBeurre, bacChocolat, bacSauceTomate, bacOignon, planDeTravail;
     private Four four;
+    private Poubelle poubelle;
 
-    // Gestion des recettes et des clients
+    private List<Interagissable> stationsInteractives;
     private List<Recette> catalogueRecettes;
     private Client[] tablesClients = new Client[3];
-    private String[] typesPlatsDisponibles = {"Baguette", "Croissant", "Pain Choco"};
+    private String[] platsMenu = {"Baguette", "Croissant", "Pain Choco", "Pizza", "Pissaladière"};
     private int score = 0;
     private Random random;
+
+    private boolean afficherLivre = false; // Gestion du livre de recettes
 
     @Override
     public void create() {
@@ -47,24 +47,37 @@ public class Boulangerie extends ApplicationAdapter {
         font = new BitmapFont();
         random = new Random();
 
-        // Initialisation des recettes du jeu
+        // 1. Catalogue complet des recettes (incluant Pizza et Pissaladière)
         catalogueRecettes = new ArrayList<>();
-        catalogueRecettes.add(new Recette("Croissant", "Farine", "Beurre", "Croissant Cru"));
-        catalogueRecettes.add(new Recette("Pain Choco", "Farine", "Chocolat", "Pain Choco Cru"));
+        catalogueRecettes.add(new Recette("Farine", "Farine", "Baguette Crue", "Baguette"));
+        catalogueRecettes.add(new Recette("Farine", "Beurre", "Croissant Cru", "Croissant"));
+        catalogueRecettes.add(new Recette("Croissant Cru", "Chocolat", "Pain Choco Cru", "Pain Choco"));
+        catalogueRecettes.add(new Recette("Farine", "Sauce Tomate", "Pizza Crue", "Pizza"));
+        catalogueRecettes.add(new Recette("Farine", "Oignon", "Pissaladiere Crue", "Pissaladière"));
 
-        // Position du boulanger
-        boulanger = new Boulanger(300, 140, 35, 35);
+        // 2. Initialisation des éléments de jeu (ajustés et compacts)
+        boulanger = new Boulanger(180, 90, 28, 28);
+        bacFarine = new PlanDeTravail(10, 130, 42, 42, "Farine");
+        bacBeurre = new PlanDeTravail(60, 130, 42, 42, "Beurre");
+        bacChocolat = new PlanDeTravail(110, 130, 42, 42, "Chocolat");
+        bacSauceTomate = new PlanDeTravail(160, 130, 42, 42, "Sauce Tomate");
+        bacOignon = new PlanDeTravail(210, 130, 42, 42, "Oignon");
+        planDeTravail = new PlanDeTravail(270, 130, 48, 48);
+        four = new Four(335, 130, 48, 48);
+        poubelle = new Poubelle(400, 130, 42, 42);
 
-        // Implantation des stations en bas
-        bacFarine = new PlanDeTravail(50, 200, 55, 55);
-        bacBeurre = new PlanDeTravail(150, 200, 55, 55);
-        bacChocolat = new PlanDeTravail(250, 200, 55, 55);
-        planDeTravail = new PlanDeTravail(380, 200, 65, 65);
-        four = new Four(510, 200, 65, 65);
+        stationsInteractives = new ArrayList<>();
+        stationsInteractives.add(bacFarine);
+        stationsInteractives.add(bacBeurre);
+        stationsInteractives.add(bacChocolat);
+        stationsInteractives.add(bacSauceTomate);
+        stationsInteractives.add(bacOignon);
+        stationsInteractives.add(planDeTravail);
+        stationsInteractives.add(four);
+        stationsInteractives.add(poubelle);
 
-        // Initialisation de la salle à manger (haut)
         tablesClients[0] = new Client("Croissant");
-        tablesClients[1] = new Client("Baguette");
+        tablesClients[1] = new Client("Pizza");
         tablesClients[2] = null;
     }
 
@@ -72,237 +85,188 @@ public class Boulangerie extends ApplicationAdapter {
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
 
-        // 1. Logique
-        boulanger.update(delta);
-        four.update(delta);
-
-        // Gestion de l'apparition et patience des clients
-        for (int i = 0; i < 3; i++) {
-            if (tablesClients[i] != null) {
-                tablesClients[i].update(delta);
-                if (tablesClients[i].getPatience() <= 0) {
-                    tablesClients[i] = null; // Le client s'en va mécontent
-                }
-            } else {
-                if (random.nextFloat() < 0.004f) {
-                    String commandeAleatoire = typesPlatsDisponibles[random.nextInt(typesPlatsDisponibles.length)];
-                    tablesClients[i] = new Client(commandeAleatoire);
-                }
-            }
+        // Ouvrir ou fermer le livre de recettes avec la touche 'L'
+        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
+            afficherLivre = !afficherLivre;
         }
 
-        // Limites de déplacement du boulanger
-        if (boulanger.getX() < 30) boulanger.setX(30);
-        if (boulanger.getX() > 650) boulanger.setX(650);
-        if (boulanger.getY() < 25) boulanger.setY(25);
-        if (boulanger.getY() > 350) boulanger.setY(350);
+        // Si le livre est ouvert, on met en pause le jeu
+        if (!afficherLivre) {
+            boulanger.update(delta);
+            four.updateCuisson(delta, catalogueRecettes);
 
-        // 2. Interactions clavier (ESPACE)
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            // Distributeur de Farine
-            if (Math.abs(boulanger.getX() - bacFarine.getX()) < 50 && Math.abs(boulanger.getY() - bacFarine.getY()) < 50) {
-                if (boulanger.getIngredientPorte() == null) {
-                    boulanger.setIngredientPorte(new Ingredient(0, 0, 25, 25, "Farine"));
-                }
-            }
-            // Distributeur de Beurre
-            if (Math.abs(boulanger.getX() - bacBeurre.getX()) < 50 && Math.abs(boulanger.getY() - bacBeurre.getY()) < 50) {
-                if (boulanger.getIngredientPorte() == null) {
-                    boulanger.setIngredientPorte(new Ingredient(0, 0, 25, 25, "Beurre"));
-                }
-            }
-            // Distributeur de Chocolat
-            if (Math.abs(boulanger.getX() - bacChocolat.getX()) < 50 && Math.abs(boulanger.getY() - bacChocolat.getY()) < 50) {
-                if (boulanger.getIngredientPorte() == null) {
-                    boulanger.setIngredientPorte(new Ingredient(0, 0, 25, 25, "Chocolat"));
-                }
-            }
-
-            // Plan de travail (Assemblage des recettes ou pose/récupération)
-            if (Math.abs(boulanger.getX() - planDeTravail.getX()) < 55 && Math.abs(boulanger.getY() - planDeTravail.getY()) < 55) {
-                if (boulanger.getIngredientPorte() == null && !planDeTravail.estVide()) {
-                    boulanger.setIngredientPorte(planDeTravail.getIngredientPose());
-                    planDeTravail.setIngredientPose(null);
-                } else if (boulanger.getIngredientPorte() != null && planDeTravail.estVide()) {
-                    planDeTravail.setIngredientPose(boulanger.getIngredientPorte());
-                    boulanger.setIngredientPorte(null);
-                } else if (boulanger.getIngredientPorte() != null && !planDeTravail.estVide()) {
-                    // Logique de Recette : Combine l'ingrédient en main et celui sur la table
-                    String itemTable = planDeTravail.getIngredientPose().getNom();
-                    String itemMain = boulanger.getIngredientPorte().getNom();
-
-                    if ((itemTable.equals("Farine") && (itemMain.equals("Beurre") || itemMain.equals("Chocolat"))) ||
-                        (itemMain.equals("Farine") && (itemTable.equals("Beurre") || itemTable.equals("Chocolat")))) {
-
-                        String resultat = itemTable.equals("Beurre") || itemMain.equals("Beurre") ? "Croissant Cru" : "Pain Choco Cru";
-                        planDeTravail.setIngredientPose(new Ingredient(0, 0, 25, 25, resultat));
-                        boulanger.setIngredientPorte(null);
-                        System.out.println("-> Recette assemblée sur le plan de travail : " + resultat);
-                    } else if (itemTable.equals("Farine") && itemMain.equals("Farine")) {
-                        planDeTravail.setIngredientPose(new Ingredient(0, 0, 25, 25, "Baguette Crue"));
-                        boulanger.setIngredientPorte(null);
+            for (int i = 0; i < 3; i++) {
+                if (tablesClients[i] != null) {
+                    tablesClients[i].update(delta);
+                    if (!tablesClients[i].isPresent()) {
+                        tablesClients[i] = null;
                     }
+                } else if (random.nextFloat() < 0.004f) {
+                    tablesClients[i] = new Client(platsMenu[random.nextInt(platsMenu.length)]);
                 }
             }
 
-            // Four Professionnel
-            if (Math.abs(boulanger.getX() - four.getX()) < 55 && Math.abs(boulanger.getY() - four.getY()) < 55) {
-                if (boulanger.getIngredientPorte() != null && four.estVide()) {
-                    four.setIngredientInterne(boulanger.getIngredientPorte());
-                    boulanger.setIngredientPorte(null);
-                } else if (boulanger.getIngredientPorte() == null && !four.estVide()) {
-                    boulanger.setIngredientPorte(four.retirerIngredient());
-                }
-            }
+            // Gestion de la touche ESPACE
+            if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                if (boulanger.estProche(bacFarine, 45)) bacFarine.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(bacBeurre, 45)) bacBeurre.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(bacChocolat, 45)) bacChocolat.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(bacSauceTomate, 45)) bacSauceTomate.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(bacOignon, 45)) bacOignon.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(planDeTravail, 50)) planDeTravail.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(four, 50)) four.interagir(boulanger, catalogueRecettes);
+                else if (boulanger.estProche(poubelle, 45)) poubelle.interagir(boulanger, catalogueRecettes);
 
-            // Livraison aux tables en haut
-            if (boulanger.getY() >= 280 && boulanger.getIngredientPorte() != null) {
-                Ingredient held = boulanger.getIngredientPorte();
-                if (held.getEtat() == Ingredient.EtatIngredient.CUIT) {
-                    int tableIndex = (int)((boulanger.getX() - 30) / 220);
-                    if (tableIndex < 0) tableIndex = 0;
-                    if (tableIndex > 2) tableIndex = 2;
-
-                    if (tablesClients[tableIndex] != null) {
-                        score += 200;
-                        boulanger.setIngredientPorte(null);
-                        tablesClients[tableIndex] = null; // Client servi !
-                        System.out.println("-> Commande livrée avec succès ! Score : " + score);
+                // Livraison aux clients
+                if (boulanger.getY() >= 195 && !boulanger.getStock().estVide()) {
+                    Ingredient platPorte = boulanger.getStock().getElement();
+                    if (platPorte.getEtat().equals("CUIT")) {
+                        int indexTable = Math.min(2, Math.max(0, (int) ((boulanger.getX() - 15) / 165)));
+                        Client client = tablesClients[indexTable];
+                        if (client != null && client.isPresent() && platPorte.getNom().equals(client.getCommande())) {
+                            score += 200;
+                            boulanger.getStock().vider();
+                            tablesClients[indexTable] = null;
+                        }
                     }
                 }
             }
         }
 
-        // 3. Rendu
-        Gdx.gl.glClearColor(0.06f, 0.05f, 0.08f, 1);
+        // ==================== RENDU GRAPHIQUE ====================
+        Gdx.gl.glClearColor(0.08f, 0.07f, 0.10f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // --- SALLE À MANGER (HAUT) ---
+        // Zone Salle des clients
         shapeRenderer.setColor(0.18f, 0.14f, 0.22f, 1);
-        shapeRenderer.rect(0, 310, 720, 170);
-
+        shapeRenderer.rect(0, 238, 520, 130);
         for (int i = 0; i < 3; i++) {
-            float tableX = 50 + i * 220;
+            float tableX = 20 + i * 165;
             shapeRenderer.setColor(0.40f, 0.25f, 0.15f, 1);
-            shapeRenderer.rect(tableX, 340, 140, 45);
-
-            if (tablesClients[i] != null) {
+            shapeRenderer.rect(tableX, 255, 115, 35);
+            if (tablesClients[i] != null && tablesClients[i].isPresent()) {
                 shapeRenderer.setColor(0.85f, 0.45f, 0.35f, 1);
-                shapeRenderer.rect(tableX + 50, 375, 40, 40);
+                shapeRenderer.rect(tableX + 40, 285, 32, 32);
             }
         }
 
-        // Séparation
+        // Comptoir de séparation
         shapeRenderer.setColor(0.12f, 0.09f, 0.06f, 1);
-        shapeRenderer.rect(0, 300, 720, 10);
+        shapeRenderer.rect(0, 230, 520, 8);
 
-        // --- CUISINE (BAS) ---
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 10; col++) {
-                if ((row + col) % 2 == 0) {
-                    shapeRenderer.setColor(0.78f, 0.75f, 0.70f, 1);
-                } else {
-                    shapeRenderer.setColor(0.68f, 0.65f, 0.60f, 1);
-                }
-                shapeRenderer.rect(20 + col * 70, 20 + row * 60, 70, 60);
-            }
+        // Dessin des Bacs
+        shapeRenderer.setColor(0.20f, 0.45f, 0.75f, 1); shapeRenderer.rect(bacFarine.getX(), bacFarine.getY(), 42, 42);
+        shapeRenderer.setColor(0.95f, 0.80f, 0.20f, 1); shapeRenderer.rect(bacBeurre.getX(), bacBeurre.getY(), 42, 42);
+        shapeRenderer.setColor(0.45f, 0.25f, 0.10f, 1); shapeRenderer.rect(bacChocolat.getX(), bacChocolat.getY(), 42, 42);
+        shapeRenderer.setColor(0.85f, 0.20f, 0.20f, 1); shapeRenderer.rect(bacSauceTomate.getX(), bacSauceTomate.getY(), 42, 42);
+        shapeRenderer.setColor(0.80f, 0.70f, 0.85f, 1); shapeRenderer.rect(bacOignon.getX(), bacOignon.getY(), 42, 42);
+
+        // Plan de travail + ingrédient posé
+        shapeRenderer.setColor(0.55f, 0.35f, 0.20f, 1);
+        shapeRenderer.rect(planDeTravail.getX(), planDeTravail.getY(), 48, 48);
+        if (!planDeTravail.getStock().estVide()) {
+            shapeRenderer.setColor(planDeTravail.getStock().getElement().getCouleur());
+            shapeRenderer.rect(planDeTravail.getX() + 12, planDeTravail.getY() + 12, 24, 24);
         }
 
-        // ==========================================
-        // STATIONS & INGRÉDIENTS AVEC TEXTURE PROpre
-        // ==========================================
-
-        // Bac Farine
-        shapeRenderer.setColor(0.20f, 0.45f, 0.75f, 1);
-        shapeRenderer.rect(bacFarine.getX(), bacFarine.getY(), 55, 55);
-        shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect(bacFarine.getX() + 12, bacFarine.getY() + 12, 31, 31);
-
-        // Bac Beurre
-        shapeRenderer.setColor(0.95f, 0.80f, 0.20f, 1);
-        shapeRenderer.rect(bacBeurre.getX(), bacBeurre.getY(), 55, 55);
-        shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect(bacBeurre.getX() + 12, bacBeurre.getY() + 12, 31, 31);
-
-        // Bac Chocolat
-        shapeRenderer.setColor(0.45f, 0.25f, 0.10f, 1);
-        shapeRenderer.rect(bacChocolat.getX(), bacChocolat.getY(), 55, 55);
-        shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect(bacChocolat.getX() + 12, bacChocolat.getY() + 12, 31, 31);
-
-        // Plan de Travail
-        shapeRenderer.setColor(0.50f, 0.30f, 0.15f, 1);
-        shapeRenderer.rect(planDeTravail.getX(), planDeTravail.getY(), 65, 65);
-        if (!planDeTravail.estVide()) {
-            shapeRenderer.setColor(planDeTravail.getIngredientPose().getCouleur());
-            shapeRenderer.rect(planDeTravail.getX() + 17, planDeTravail.getY() + 17, 31, 31);
-        }
-
-        // Four Pro
+        // Four + ingrédient + barre de cuisson
         shapeRenderer.setColor(0.42f, 0.45f, 0.48f, 1);
-        shapeRenderer.rect(four.getX(), four.getY(), 65, 65);
-        if (!four.estVide()) {
-            shapeRenderer.setColor(four.getIngredientInterne().getCouleur());
-            shapeRenderer.rect(four.getX() + 17, four.getY() + 17, 31, 31);
-        }
+        shapeRenderer.rect(four.getX(), four.getY(), 48, 48);
+        if (!four.getStock().estVide()) {
+            Ingredient ingFour = four.getStock().getElement();
+            shapeRenderer.setColor(ingFour.getCouleur());
+            shapeRenderer.rect(four.getX() + 12, four.getY() + 12, 24, 24);
 
-        // ==========================================
-        // BOULANGER & INGRÉDIENT PORTÉ
-        // ==========================================
-        shapeRenderer.setColor(0.95f, 0.95f, 0.98f, 1);
-        shapeRenderer.rect(boulanger.getX(), boulanger.getY(), 35, 35);
-        shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect(boulanger.getX() + 4, boulanger.getY() + 30, 27, 8);
-
-        if (boulanger.getIngredientPorte() != null) {
-            shapeRenderer.setColor(boulanger.getIngredientPorte().getCouleur());
-            shapeRenderer.rect(boulanger.getX() + 5, boulanger.getY() + 42, 25, 25);
-        }
-
-        // Jauge de cuisson
-        if (!four.estVide()) {
             shapeRenderer.setColor(Color.DARK_GRAY);
-            shapeRenderer.rect(four.getX() - 5, four.getY() + 75, 75, 10);
-            float prog = four.getProgressionCuisson();
-            shapeRenderer.setColor(four.getIngredientInterne().getEtat() == Ingredient.EtatIngredient.CUIT ? Color.GREEN : Color.YELLOW);
-            shapeRenderer.rect(four.getX() - 5, four.getY() + 75, 75 * prog, 10);
+            shapeRenderer.rect(four.getX() - 4, four.getY() + 54, 56, 8);
+            if (ingFour.getEtat().equals("BRULE")) shapeRenderer.setColor(Color.BLACK);
+            else if (ingFour.getEtat().equals("CUIT")) shapeRenderer.setColor(Color.GREEN);
+            else shapeRenderer.setColor(Color.YELLOW);
+            shapeRenderer.rect(four.getX() - 4, four.getY() + 54, 56 * four.getProgressionCuisson(), 8);
+        }
+
+        // Poubelle
+        shapeRenderer.setColor(0.65f, 0.20f, 0.20f, 1);
+        shapeRenderer.rect(poubelle.getX(), poubelle.getY(), 42, 42);
+
+        // Boulanger
+        shapeRenderer.setColor(0.95f, 0.95f, 0.98f, 1);
+        shapeRenderer.rect(boulanger.getX(), boulanger.getY(), boulanger.getLargeur(), boulanger.getHauteur());
+        if (!boulanger.getStock().estVide()) {
+            shapeRenderer.setColor(boulanger.getStock().getElement().getCouleur());
+            shapeRenderer.rect(boulanger.getX() + 4, boulanger.getY() + 32, 20, 20);
         }
 
         shapeRenderer.end();
 
-        // ==========================================
-        // HUD & COMMANDES CLIENTS
-        // ==========================================
+        // ==================== TEXTES & INTERFACE ====================
         batch.begin();
         font.setColor(Color.WHITE);
-        font.draw(batch, "SCORE : " + score, 30, 455);
-        font.draw(batch, "SALLE A MANGER", 310, 455);
+        font.draw(batch, "SCORE : " + score, 15, 360);
+        font.draw(batch, "[L] Livre de Recettes", 360, 360);
 
         for (int i = 0; i < 3; i++) {
-            float tableX = 50 + i * 220;
-            if (tablesClients[i] != null) {
-                font.setColor(Color.BLACK);
-                font.draw(batch, "Veut: " + tablesClients[i].getcommande(), tableX + 25, 415);
+            float tableX = 20 + i * 165;
+            if (tablesClients[i] != null && tablesClients[i].isPresent()) {
+                font.setColor(Color.YELLOW);
+                font.draw(batch, "Veut : " + tablesClients[i].getCommande(), tableX, 335);
 
-                float patience = tablesClients[i].getPatience();
-                font.setColor(patience > 30 ? Color.GREEN : Color.RED);
-                font.draw(batch, (int)patience + "%", tableX + 45, 395);
+                int secondes = (int) Math.ceil(tablesClients[i].getPatience());
+                font.setColor(secondes > 15 ? Color.GREEN : Color.RED);
+                font.draw(batch, "Patience : " + secondes + "s", tableX + 5, 275);
             } else {
-                font.setColor(Color.LIGHT_GRAY);
-                font.draw(batch, "Table vide", tableX + 35, 410);
+                font.setColor(Color.GRAY);
+                font.draw(batch, "Table libre", tableX + 20, 275);
             }
         }
 
-        font.setColor(Color.WHITE);
-        font.draw(batch, "ZQSD : Bouger | ESPACE : Prendre, Combiner & Cuire", 30, 25);
+        // Étiquettes des stations
+        font.setColor(Color.CYAN);
+        font.draw(batch, "Farine", bacFarine.getX() + 2, bacFarine.getY() + 56);
+        font.draw(batch, "Beurre", bacBeurre.getX() + 2, bacBeurre.getY() + 56);
+        font.draw(batch, "Choco", bacChocolat.getX() + 5, bacChocolat.getY() + 56);
+        font.draw(batch, "Tomate", bacSauceTomate.getX(), bacSauceTomate.getY() + 56);
+        font.draw(batch, "Oignon", bacOignon.getX() + 2, bacOignon.getY() + 56);
+        font.draw(batch, "Travail", planDeTravail.getX() + 4, planDeTravail.getY() + 62);
+        font.draw(batch, "Four", four.getX() + 12, four.getY() + 62);
+        font.draw(batch, "Poubelle", poubelle.getX() - 2, poubelle.getY() + 56);
 
-        font.draw(batch, "Farine", bacFarine.getX() + 8, bacFarine.getY() - 8);
-        font.draw(batch, "Beurre", bacBeurre.getX() + 8, bacBeurre.getY() - 8);
-        font.draw(batch, "Choco", bacChocolat.getX() + 10, bacChocolat.getY() - 8);
-        font.draw(batch, "Plan", planDeTravail.getX() + 18, planDeTravail.getY() - 8);
-        font.draw(batch, "Four", four.getX() + 20, four.getY() - 8);
+        if (!planDeTravail.getStock().estVide()) {
+            font.setColor(Color.WHITE);
+            font.draw(batch, planDeTravail.getStock().getElement().getNom(), planDeTravail.getX() - 5, planDeTravail.getY() + 62);
+        }
+
+        if (!boulanger.getStock().estVide()) {
+            Ingredient port = boulanger.getStock().getElement();
+            font.setColor(Color.YELLOW);
+            font.draw(batch, port.getNom() + " (" + port.getEtat() + ")", boulanger.getX() - 15, boulanger.getY() + 60);
+        }
+
+        // Affichage du Livre de Recettes si ouvert
+        if (afficherLivre) {
+            batch.end();
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0.1f, 0.1f, 0.15f, 0.95f);
+            shapeRenderer.rect(60, 50, 400, 260);
+            shapeRenderer.end();
+
+            batch.begin();
+            font.setColor(Color.GOLD);
+            font.draw(batch, "=== LIVRE DE RECETTES ===", 130, 290);
+            font.setColor(Color.WHITE);
+            font.draw(batch, "- Baguette : Farine + Farine -> Four", 80, 250);
+            font.draw(batch, "- Croissant : Farine + Beurre -> Four", 80, 220);
+            font.draw(batch, "- Pain Choco : Croissant Cru + Chocolat -> Four", 80, 190);
+            font.draw(batch, "- Pizza : Farine + Sauce Tomate -> Four", 80, 160);
+            font.draw(batch, "- Pissaladiere : Farine + Oignon -> Four", 80, 130);
+            font.setColor(Color.YELLOW);
+            font.draw(batch, "Appuyez sur [L] pour fermer le livre", 120, 75);
+        } else {
+            font.setColor(Color.LIGHT_GRAY);
+            font.draw(batch, "ZQSD / Fleches : Bouger | ESPACE : Interagir | [L] Livre", 15, 16);
+        }
 
         batch.end();
     }

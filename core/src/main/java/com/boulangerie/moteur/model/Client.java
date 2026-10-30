@@ -2,37 +2,26 @@ package com.boulangerie.moteur.model;
 
 public class Client {
     private String commande;
-    private float patience; // de 100 à 0
+    private float patience; // Temps restant en secondes
     private boolean present;
 
     public Client(String commande) {
         this.commande = commande;
-        this.patience = 100f;
+        this.patience = 60.0f; // 60 secondes d'attente
         this.present = true;
     }
 
     public void update(float delta) {
         if (present) {
-            patience -= delta * 2f; // Baisse progressive de la patience
+            patience -= delta; // Diminue de 1 seconde par seconde réelle
             if (patience <= 0) {
                 patience = 0;
+                present = false;
             }
         }
     }
 
-    public String getcommande() {
-        return commande;
-    }
-
-    public float getPatience() {
-        return patience;
-    }
-
-    public boolean isPresent() {
-        return present && patience > 0;
-    }
-
-    public void setPresent(boolean present) {
-        this.present = present;
-    }
+    public String getCommande() { return commande; }
+    public float getPatience() { return patience; }
+    public boolean isPresent() { return present; }
 }

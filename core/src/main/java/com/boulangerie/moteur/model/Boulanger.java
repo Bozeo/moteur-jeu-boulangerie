@@ -5,54 +5,30 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Boulanger extends ElementDeJeu {
-    private float vitesse = 200f;
-    private Ingredient ingredientPorte; // L'ingrédient tenu par le boulanger
+    private Stock<Ingredient> stock;
+    private float vitesse = 220f;
 
     public Boulanger(float x, float y, float largeur, float hauteur) {
         super(x, y, largeur, hauteur);
-        this.ingredientPorte = null;
+        this.stock = new Stock<>();
     }
 
     @Override
     public void update(float delta) {
-        // Déplacements fluides (ZQSD ou Flèches)
-        if (Gdx.input.isKeyPressed(Input.Keys.Z) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            y += vitesse * delta;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            y -= vitesse * delta;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.Q) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            x -= vitesse * delta;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            x += vitesse * delta;
-        }
+        if (Gdx.input.isKeyPressed(Input.Keys.Z) || Gdx.input.isKeyPressed(Input.Keys.UP)) y += vitesse * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) y -= vitesse * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.Q) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) x -= vitesse * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) x += vitesse * delta;
 
-        // Touche Espace pour interagir (exemple)
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            marquerInteraction();
-        }
-    }
-
-    public void marquerInteraction() {
-        if (ingredientPorte == null) {
-            System.out.println("Le boulanger essaie d'interagir (mains vides).");
-        } else {
-            System.out.println("Le boulanger pose : " + ingredientPorte.getNom());
-        }
+        // Nouvelles limites plus compactes et décalées à gauche
+        if (x < 10) x = 10;
+        if (x > 520) x = 520;
+        if (y < 45) y = 45;
+        if (y > 225) y = 225;
     }
 
     @Override
-    public void render(SpriteBatch batch) {
-        // Rendu visuel du boulanger
-    }
+    public void render(SpriteBatch batch) {}
 
-    public Ingredient getIngredientPorte() {
-        return ingredientPorte;
-    }
-
-    public void setIngredientPorte(Ingredient ingredientPorte) {
-        this.ingredientPorte = ingredientPorte;
-    }
+    public Stock<Ingredient> getStock() { return stock; }
 }

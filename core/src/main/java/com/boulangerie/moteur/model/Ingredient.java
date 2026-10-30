@@ -2,44 +2,33 @@ package com.boulangerie.moteur.model;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Ingredient extends ElementDeJeu {
     private String nom;
-    private EtatIngredient etat;
-
-    public enum EtatIngredient {
-        BRUT, PREPARE, CUIT, BRULE
-    }
+    private String etat; // "BRUT", "CUIT", "BRULE"
 
     public Ingredient(float x, float y, float largeur, float hauteur, String nom) {
         super(x, y, largeur, hauteur);
         this.nom = nom;
-        this.etat = EtatIngredient.BRUT;
+        this.etat = "BRUT";
     }
 
-    // Donne une couleur propre à chaque ingrédient et à son état
     public Color getCouleur() {
-        if (etat == EtatIngredient.CUIT) {
-            return new Color(1.0f, 0.6f, 0.1f, 1); // Doré / Cuit
-        } else if (etat == EtatIngredient.BRULE) {
-            return Color.BLACK; // Brûlé
-        }
+        if (etat.equals("BRULE")) return Color.BLACK;
+        if (etat.equals("CUIT")) return new Color(1.0f, 0.55f, 0.0f, 1);
 
-        // Selon le type d'ingrédient brut ou préparé
         switch (nom) {
-            case "Farine":
-                return new Color(0.95f, 0.95f, 0.90f, 1); // Blanc cassé
-            case "Beurre":
-                return new Color(0.95f, 0.85f, 0.30f, 1); // Jaune beurre
-            case "Chocolat":
-                return new Color(0.35f, 0.20f, 0.10f, 1); // Marron chocolat
-            case "Croissant Cru":
-                return new Color(0.85f, 0.70f, 0.50f, 1); // Beige croissant
-            case "Pain Choco Cru":
-                return new Color(0.50f, 0.30f, 0.20f, 1); // Marron clair
-            default:
-                return Color.WHITE;
+            case "Farine": return new Color(0.95f, 0.95f, 0.90f, 1);
+            case "Beurre": return new Color(0.95f, 0.85f, 0.25f, 1);
+            case "Chocolat": return new Color(0.35f, 0.20f, 0.10f, 1);
+            case "Sauce Tomate": return new Color(0.85f, 0.20f, 0.20f, 1);
+            case "Oignon": return new Color(0.80f, 0.70f, 0.85f, 1);
+            case "Baguette Crue": return new Color(0.90f, 0.85f, 0.70f, 1);
+            case "Croissant Cru": return new Color(0.85f, 0.70f, 0.45f, 1);
+            case "Pain Choco Cru": return new Color(0.55f, 0.35f, 0.20f, 1);
+            case "Pizza Crue": return new Color(0.90f, 0.50f, 0.40f, 1);
+            case "Pissaladiere Crue": return new Color(0.85f, 0.80f, 0.65f, 1);
+            default: return Color.WHITE;
         }
     }
 
@@ -49,19 +38,8 @@ public class Ingredient extends ElementDeJeu {
     @Override
     public void render(SpriteBatch batch) {}
 
-    public String getNom() {
-        return nom;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
-    public EtatIngredient getEtat() {
-        return etat;
-    }
-
-    public void setEtat(EtatIngredient etat) {
-        this.etat = etat;
-    }
+    public String getNom() { return nom; }
+    public void setNom(String nom) { this.nom = nom; }
+    public String getEtat() { return etat; }
+    public void setEtat(String etat) { this.etat = etat; }
 }
